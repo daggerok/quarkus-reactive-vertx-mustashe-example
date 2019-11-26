@@ -62,6 +62,15 @@ jobs:
         - http :8080
       after_script:
         - stop_any 80 8080
+    - stage: test
+      name: dev
+      before_script:
+        - cd $TRAVIS_BUILD_DIR && (./mvnw compile quarkus:dev &)
+        - wait_for 8080
+      script:
+        - http :8080
+      after_script:
+        - stop_any 80 8080
 cache:
   npm: true
   pip: true
