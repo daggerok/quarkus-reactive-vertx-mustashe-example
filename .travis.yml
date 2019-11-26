@@ -1,0 +1,72 @@
+notifications:
+  email: false
+git:
+  quiet: true
+  depth: false
+jdk: openjdk8
+node_js: lts/*
+python: 3.7
+services: docker
+addons:
+  apt:
+    update: true
+    packages:
+      - python3-pip
+      - sudo
+      - lsof
+      - curl
+      - jq
+install: true
+before_install:
+  - |
+    if [ ! -f ${HOME}/.local/daggerok/bash-functions/master/main.bash ] ; then
+      mkdir -p ${HOME}/.local/daggerok/bash-functions/master ;
+      curl -s https://raw.githubusercontent.com/daggerok/bash-functions/master/main.bash > ${HOME}/.local/daggerok/bash-functions/master/main.bash ;
+    fi
+    source ${HOME}/.local/daggerok/bash-functions/master/main.bash ;
+  - stop_any 80 5432 8080
+  - export PATH=$HOME/.local/bin:$PATH
+  - pip3 install --user --upgrade pip setuptools
+  - pip install --user --upgrade httpie
+jobs:
+  include:
+    - stage: test
+      name: native
+      before_script:
+        - cd $TRAVIS_BUILD_DIR && ./mvnw package -Pnative -Dquarkus.native.container-build=true
+        - docker build -f src/main/docker/Dockerfile.native -t daggerok/native-app .
+        - docker run -i --rm -p 8080:8080 --name app -v "$(pwd)/src/main/resources/templates:/work/templates" daggerok/native-app &
+      script:
+        - http :8080
+      after_script:
+        - docker rm -f -v app
+    - stage: test
+      name: jvm
+      before_script:
+        - cd $TRAVIS_BUILD_DIR && ./mvnw compile quarkus:build
+        - docker build -f src/main/docker/Dockerfile.jvm -t daggerok/jvm-app .
+        - docker run -i --rm -p 8080:8080 --name app daggerok/jvm-app &
+        - wait_for 8080
+        - sleep 3s
+      script:
+        - http :8080
+      after_script:
+        - docker rm -f -v app
+    - stage: test
+      name: jar
+      before_script:
+        - cd $TRAVIS_BUILD_DIR && ./mvnw compile quarkus:build
+        - java -jar target/*-runner.jar &
+        - wait_for 8080
+      script:
+        - http :8080
+      after_script:
+        - stop_any 80 8080
+cache:
+  npm: true
+  pip: true
+  packages: true
+  directories:
+    - ~/.m2
+    - ~/.docker
+    - ~/.local/daggerok
