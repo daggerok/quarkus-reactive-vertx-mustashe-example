@@ -1,4 +1,4 @@
-# quarkus k8s reactive vertx [![Build Status](https://travis-ci.org/daggerok/quarkus-reactive-vertx-mustashe-example.svg?branch=master)](https://travis-ci.org/daggerok/quarkus-reactive-vertx-mustashe-example)
+# quarkus reactive vertx [![Build Status](https://travis-ci.org/daggerok/quarkus-reactive-vertx-web-templ-handlebars-example.svg?branch=master)](https://travis-ci.org/daggerok/quarkus-reactive-vertx-web-templ-handlebars-example)
 Handlebars with reactive Vertx quarkus
 
 ## getting started
